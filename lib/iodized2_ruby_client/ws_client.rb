@@ -29,7 +29,6 @@ module Iodized2RubyClient
       @heartbeat = Thread.new do
         loop do
           sleep(20)
-          puts "💓"
           send "_heartbeat"
         end
       end
