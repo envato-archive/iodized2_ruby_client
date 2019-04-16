@@ -20,6 +20,11 @@ module Iodized2RubyClient
       send(key, result[key])
     end
 
+    def enabled?(feature_name)
+      feature = @features.find { |feature| feature["name"] == feature_name }
+      feature["active"] if feature
+    end
+
     private
 
     def sync(features)
