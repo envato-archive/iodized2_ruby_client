@@ -27,16 +27,16 @@ module Iodized2RubyClient
     end
 
     def create(feature)
-      # TODO: implement-me!
-      # @features << feature
+      @features << feature
     end
 
     def update(feature)
-      # TODO: implement-me!
+      index = @features.index { |f| f["id"] == feature["id"] }
+      @features[index] = feature if index
     end
 
     def delete(feature)
-      # TODO: implement-me!
+      @features = @features.reject { |f| f["id"] == feature["id"] }
     end
   end
 end
