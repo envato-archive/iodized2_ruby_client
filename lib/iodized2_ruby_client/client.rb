@@ -17,7 +17,7 @@ module Iodized2RubyClient
       result = JSON.parse(message)
 
       key = result.keys.first
-      send(key, result[key])
+      send("handle_#{key}", result[key])
     end
 
     def enabled?(feature_name)
@@ -27,21 +27,25 @@ module Iodized2RubyClient
 
     private
 
-    def sync(features)
-      @features = features
+    def handle_sync(features)
+      @features = features.freeze
     end
 
-    def create(feature)
-      @features << feature
+    def handle_create(feature)
+      @features = (@features.dup << feature).freeze
     end
 
-    def update(feature)
-      index = @features.index { |f| f["id"] == feature["id"] }
-      @features[index] = feature if index
+    # this is essentially a delete, followed by a create
+    # but if we simply called them in sequence we would leave a point where a
+    # valid feature momentarily disappears from the set of features.
+    # so to avoid needing mutexes around each access, we will effectively duplicate
+    # those two operations into a single update.
+    def handle_update(feature)
+      @features = (@features.reject { |f| f["id"] == feature["id"] } << feature).freeze
     end
 
-    def delete(feature)
-      @features = @features.reject { |f| f["id"] == feature["id"] }
+    def handle_delete(feature)
+      @features = @features.reject { |f| f["id"] == feature["id"] }.freeze
     end
   end
 end
