@@ -1,4 +1,3 @@
-require "base64"
 require 'socket'
 require 'uri'
 
@@ -35,7 +34,6 @@ module Iodized2RubyClient
         end
       end
 
-      # @driver.set_header("Authorization", auth_header_value(key, secret))
       @driver.start
     end
 
