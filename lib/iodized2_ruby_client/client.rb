@@ -1,5 +1,6 @@
 require 'iodized2_ruby_client/ws_client'
 require 'iodized2_ruby_client/features_set'
+require 'forwardable'
 
 module Iodized2RubyClient
   class Client
