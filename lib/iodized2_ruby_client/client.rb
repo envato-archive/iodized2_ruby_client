@@ -1,12 +1,15 @@
 require 'iodized2_ruby_client/ws_client'
+require 'iodized2_ruby_client/features_set'
 
 module Iodized2RubyClient
   class Client
-    attr_reader :features
+    extend Forwardable
+
+    def_delegators :@features, :features, :enabled?
 
     def initialize(url)
       @url = url
-      @features = []
+      @features = FeaturesSet.new
 
       @ws_client = Iodized2RubyClient::WSClient.new(@url) do |message|
         handle_message(message)
@@ -17,31 +20,25 @@ module Iodized2RubyClient
       result = JSON.parse(message)
 
       key = result.keys.first
-      send(key, result[key])
-    end
-
-    def enabled?(feature_name)
-      feature = @features.find { |feature| feature["name"] == feature_name }
-      feature["active"] if feature
+      send("handle_#{key}", result[key])
     end
 
     private
 
-    def sync(features)
-      @features = features
+    def handle_sync(features)
+      @features.sync_features(features)
     end
 
-    def create(feature)
-      @features << feature
+    def handle_create(feature)
+      @features.add_feature(feature)
     end
 
-    def update(feature)
-      index = @features.index { |f| f["id"] == feature["id"] }
-      @features[index] = feature if index
+    def handle_update(feature)
+      @features.update_feature(feature)
     end
 
-    def delete(feature)
-      @features = @features.reject { |f| f["id"] == feature["id"] }
+    def handle_delete(feature)
+      @features.delete_feature(feature)
     end
   end
 end
