@@ -1,6 +1,7 @@
-require 'websocket/driver'
 require 'socket'
 require 'uri'
+
+require 'websocket/driver'
 
 module Iodized2RubyClient
   class WSClient
@@ -8,7 +9,7 @@ module Iodized2RubyClient
 
     attr_reader :url, :thread
 
-    def initialize(url, &handler)
+    def initialize(url, key, secret, &handler)
       @url  = url
       @uri  = URI.parse(url)
       @port = @uri.port || DEFAULT_PORTS[@uri.scheme]
@@ -18,7 +19,7 @@ module Iodized2RubyClient
 
       @driver = WebSocket::Driver.client(self)
 
-      # @driver.on(:open)    { |event| send "Hello world!" }
+      @driver.on(:open)    { |event| authenticate(key, secret) }
       @driver.on(:message) { |event| handler.(event.data) unless heartbeat?(event.data) }
       @driver.on(:close)   { |event| finalize(event) }
 
@@ -59,6 +60,14 @@ module Iodized2RubyClient
 
     def heartbeat?(data)
       data == '❤️'
+    end
+
+    def authenticate(key, secret)
+      payload = JSON.dump({
+        key: key,
+        secret: secret
+      })
+      send "authenticate #{payload}"
     end
   end
 end

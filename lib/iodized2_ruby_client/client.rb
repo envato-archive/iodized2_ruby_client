@@ -7,16 +7,17 @@ module Iodized2RubyClient
 
     def_delegators :@features, :features, :enabled?
 
-    def initialize(url)
+    def initialize(url, key, secret)
       @url = url
       @features = FeaturesSet.new
 
-      @ws_client = Iodized2RubyClient::WSClient.new(@url) do |message|
+      @ws_client = Iodized2RubyClient::WSClient.new(@url, key, secret) do |message|
         handle_message(message)
       end
     end
 
     def handle_message(message)
+      puts message
       result = JSON.parse(message)
 
       key = result.keys.first
