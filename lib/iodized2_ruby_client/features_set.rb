@@ -6,8 +6,8 @@ module Iodized2RubyClient
       @features = []
     end
 
-    def enabled?(feature_name)
-      feature = @features.find { |feature| feature["name"] == feature_name }
+    def enabled?(feature_key)
+      feature = @features.find { |feature| feature["key"] == feature_key }
       feature["active"] if feature
     end
 
