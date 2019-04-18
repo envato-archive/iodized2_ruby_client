@@ -14,7 +14,7 @@ module Iodized2RubyClient
 
       @thread = Thread.new do
         EM.run do
-          @ws = Faye::WebSocket::Client.new(url)
+          @ws = create_client(url)
 
           @ws.on :open do |event|
             p :open
@@ -27,8 +27,12 @@ module Iodized2RubyClient
           end
 
           @ws.on :close do |event|
-            p :close
+            p :close, event
             finalize(event)
+          end
+
+          @ws.on :error do |err|
+            p :error, err
           end
         end
       end
@@ -50,6 +54,13 @@ module Iodized2RubyClient
     end
 
     private
+
+    def create_client(url)
+      Faye::WebSocket::Client.new(url)
+    rescue => e
+      puts "🛑 #{e.message}"
+      puts e.backtrace.join("\n")
+    end
 
     def heartbeat?(data)
       data == '❤️'
