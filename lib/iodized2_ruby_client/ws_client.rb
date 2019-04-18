@@ -1,52 +1,45 @@
-require 'socket'
-require 'uri'
-
-require 'websocket/driver'
+require "faye/websocket"
+require "eventmachine"
 
 module Iodized2RubyClient
   class WSClient
-    DEFAULT_PORTS = { 'ws' => 80, 'wss' => 443 }
-
-    attr_reader :url, :thread
-
     def initialize(url, key, secret, &handler)
-      @url  = url
-      @uri  = URI.parse(url)
-      @port = @uri.port || DEFAULT_PORTS[@uri.scheme]
-
-      @tcp  = TCPSocket.new(@uri.host, @port)
-      @dead = false
-
-      @driver = WebSocket::Driver.client(self)
-
-      @driver.on(:open)    { |event| authenticate(key, secret) }
-      @driver.on(:message) { |event| handler.(event.data) unless heartbeat?(event.data) }
-      @driver.on(:close)   { |event| finalize(event) }
-
-      @thread = Thread.new do
-        @driver.parse(@tcp.read(1)) until @dead
-      end
-
       @heartbeat = Thread.new do
         loop do
           sleep(20)
+          puts "💓"
           send "_heartbeat"
         end
       end
 
-      @driver.start
+      @thread = Thread.new do
+        EM.run do
+          @ws = Faye::WebSocket::Client.new(url)
+
+          @ws.on :open do |event|
+            p :open
+            authenticate(key, secret)
+          end
+
+          @ws.on :message do |event|
+            p [:message, event.data]
+            handler.call(event.data) unless heartbeat?(event.data)
+          end
+
+          @ws.on :close do |event|
+            p :close
+            finalize(event)
+          end
+        end
+      end
     end
 
     def send(message)
-      @driver.text(message)
-    end
-
-    def write(data)
-      @tcp.write(data)
+      @ws.send(message)
     end
 
     def close
-      @driver.close
+      @ws.close
     end
 
     def finalize(event)

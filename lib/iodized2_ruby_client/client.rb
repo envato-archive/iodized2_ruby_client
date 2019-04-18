@@ -9,10 +9,9 @@ module Iodized2RubyClient
     def_delegators :@features, :features, :enabled?
 
     def initialize(url, key, secret)
-      @url = url
       @features = FeaturesSet.new
 
-      @ws_client = Iodized2RubyClient::WSClient.new(@url, key, secret) do |message|
+      @ws_client = Iodized2RubyClient::WSClient.new(url, key, secret) do |message|
         handle_message(message)
       end
     end
